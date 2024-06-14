@@ -892,6 +892,28 @@ namespace
       }
       return true;
   }
+
+    bool WriteSecureSetting(const std::wstring& key, const std::wstring& value) {
+        CREDENTIALW cred = {0};
+        cred.Type = CRED_TYPE_GENERIC;
+        cred.TargetName = key.c_str();
+        cred.CredentialBlob = (LPBYTE)value.c_str();
+        cred.CredentialBlobSize = (DWORD)(value.size() * sizeof(wchar_t));
+        cred.Persist = CRED_PERSIST_LOCAL_MACHINE;
+
+        return CredWriteW(&cred, 0);
+    }
+
+    bool ReadSecureSetting(const std::wstring& key, std::wstring& value) {
+        PCREDENTIALW pcred = NULL;
+        if (CredReadW(key.c_str(), CRED_TYPE_GENERIC, 0, &pcred)) {
+            value.assign((wchar_t*)pcred->CredentialBlob, pcred->CredentialBlobSize / sizeof(wchar_t));
+            CredFree(pcred);
+            return true;
+        }
+        return false;
+    }
+
 } // namespace
 
 void FlutterSecureStorageWindowsPluginRegisterWithRegistrar(
